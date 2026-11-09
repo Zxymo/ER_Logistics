@@ -1,0 +1,7 @@
+{
+  "name": "ER_Logistics",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
