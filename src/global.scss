@@ -35,3 +35,15 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import '@ionic/angular/css/palettes/dark.system.css';
+
+.operation-status{margin:0 0 18px;color:#78827e;font-size:12px}
+.operation-status ion-progress-bar{height:3px;margin-bottom:8px}
+.error-message{color:#a7443b}
+.submit-button ion-spinner,.price-note ion-spinner,.empty-state ion-spinner{width:16px;height:16px;vertical-align:middle}
+.submit-button ion-spinner{color:inherit}
+.destination-field{position:relative}
+.destination-options{position:absolute;z-index:5;top:calc(100% + 4px);right:0;left:0;max-height:260px;overflow-y:auto;border:1px solid #e8ece9;border-radius:8px;background:#fff;box-shadow:0 8px 24px #1b31261a}
+.destination-option{display:block;width:100%;border:0;background:#fff;color:#17231f;cursor:pointer;font:inherit;font-size:13px;padding:11px 12px;text-align:left}
+.destination-option:hover,.destination-option[aria-selected=true]{background:#f0f6f2}
+.destination-empty,.destination-hint{display:block;color:#78827e;font-size:11px;padding:11px 12px}
+.destination-hint{border-top:1px solid #e8ece9}

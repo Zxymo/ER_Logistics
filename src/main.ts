@@ -1,3 +1,4 @@
+import { provideHttpClient } from '@angular/common/http';
 import { bootstrapApplication } from '@angular/platform-browser';
 import {
   RouteReuseStrategy,
@@ -15,6 +16,7 @@ bootstrapApplication(AppComponent, {
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     provideIonicAngular(),
+    provideHttpClient(),
     provideRouter(routes, withPreloading(PreloadAllModules), withComponentInputBinding()),
   ],
 });

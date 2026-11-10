@@ -1,21 +1,233 @@
-<ion-header [translucent]="true">
+<ion-header>
   <ion-toolbar>
-    <ion-title> Blank </ion-title>
+    <ion-title>ER Logistics</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <main class="page-shell">
+    <section class="page-heading" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">DELIVERY MANAGEMENT</p>
+        <h1 id="page-title">New delivery</h1>
+        <p class="intro">Enter the dispatch details to keep your delivery records up to date.</p>
+      </div>
+      <div class="record-count" aria-live="polite">
+        <span>{{ deliveries.length }}</span>
+        <span>deliveries logged</span>
+      </div>
+    </section>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>
-      Start with Ionic
-      <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a>
-    </p>
-  </div>
+    <form class="delivery-form" (ngSubmit)="saveDelivery()">
+      @if (loadingLocations || isSavingDelivery) {
+      <div class="operation-status" role="status" aria-live="polite">
+        <ion-progress-bar type="indeterminate"></ion-progress-bar>
+        <span>{{ loadingLocations ? 'Loading destinations and rates…' : 'Saving delivery…' }}</span>
+      </div>
+      } @if (deliveryError) {
+      <p class="error-message" role="alert">{{ deliveryError }}</p>
+      }
+
+      <div class="form-section-heading">
+        <div class="section-icon" aria-hidden="true">01</div>
+        <div>
+          <h2>Dispatch details</h2>
+          <p>Basic information for this delivery</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <label class="field">
+          <span>Date <span class="required-mark">*</span></span>
+          <input type="date" name="date" [(ngModel)]="delivery.date" required />
+        </label>
+
+        <label class="field">
+          <span>DR No. <span class="required-mark">*</span></span>
+          <input
+            type="text"
+            name="drNumber"
+            [(ngModel)]="delivery.drNumber"
+            placeholder="e.g. DR-0001"
+            autocomplete="off"
+            required
+          />
+        </label>
+
+        <label class="field">
+          <span>Truck plate no. <span class="required-mark">*</span></span>
+          <select name="truckPlate" [(ngModel)]="delivery.truckPlate" required>
+            <option value="" disabled>Select truck plate no.</option>
+            <option value="CCR 2867">CCR 2867</option>
+            <option value="CCR 2869">CCR 2869</option>
+            <option value="CBF 3034">CBF 3034</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Customer's name <span class="required-mark">*</span></span>
+          <input
+            type="text"
+            name="customerName"
+            [(ngModel)]="delivery.customerName"
+            placeholder="Enter customer name"
+            autocomplete="organization"
+            required
+          />
+        </label>
+
+        <label class="field">
+          <span>Post length <span class="required-mark">*</span></span>
+          <select name="postLength" [(ngModel)]="delivery.postLength" required>
+            <option [ngValue]="null" disabled>Select post length</option>
+            <option [ngValue]="40">40 ft</option>
+            <option [ngValue]="45">45 ft</option>
+            <option [ngValue]="50">50 ft</option>
+            <option [ngValue]="55">55 ft</option>
+            <option [ngValue]="60">60 ft</option>
+          </select>
+        </label>
+
+        <label class="field destination-field">
+          <span>Destination <span class="required-mark">*</span></span>
+          <input
+            type="search"
+            name="destination"
+            [ngModel]="destinationSearch"
+            (ngModelChange)="onDestinationSearch($event)"
+            (focus)="destinationOptionsOpen = true"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-controls="destination-options"
+            [attr.aria-expanded]="destinationOptionsOpen"
+            [disabled]="loadingLocations || locations.length === 0"
+            [placeholder]="loadingLocations ? 'Loading destinations…' : 'Search location or province'"
+            autocomplete="off"
+            required
+            [attr.aria-invalid]="destinationSearch.length > 0 && delivery.locationId === null"
+          />
+          @if (destinationOptionsOpen && !loadingLocations && locations.length > 0) {
+          <div class="destination-options" id="destination-options" role="listbox" aria-label="Destinations">
+            @for (location of filteredLocations; track location.id) {
+            <button
+              class="destination-option"
+              type="button"
+              role="option"
+              [attr.aria-selected]="delivery.locationId === location.id"
+              (click)="selectLocation(location)"
+            >
+              {{ location.fullLabel }}
+            </button>
+            } @empty {
+            <span class="destination-empty">No matching destinations</span>
+            } @if (filteredLocations.length === 20) {
+            <span class="destination-hint">Showing 20 matches. Type to narrow the results.</span>
+            }
+          </div>
+          } @if (locationError) {
+          <span class="error-message" role="alert">{{ locationError }}</span>
+          } @else if (destinationSearch.length > 0 && delivery.locationId === null) {
+          <span class="error-message">Choose a destination from the matching results.</span>
+          }
+        </label>
+      </div>
+
+      <div class="price-panel" [class.price-unconfigured]="calculatedPrice === null">
+        <div class="price-copy">
+          <span class="price-label">Delivery price</span>
+          <span class="price-note">
+            {{ calculatedPrice === null ? 'Select a destination and post length to see the rate' : 'Calculated from the
+            database rate table' }}
+          </span>
+        </div>
+        <output class="price-value" aria-live="polite">
+          {{ calculatedPrice === null ? '—' : (calculatedPrice | number: '1.2-2') }}
+        </output>
+      </div>
+
+      <div class="form-footer">
+        <span class="required-hint"><span class="required-mark">*</span> Required fields</span>
+        <button
+          class="submit-button"
+          type="submit"
+          [disabled]="isSavingDelivery || loadingLocations || locations.length === 0"
+        >
+          @if (isSavingDelivery) {
+          <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+          }
+          <span aria-hidden="true">＋</span>
+          {{ isSavingDelivery ? 'Saving delivery…' : 'Add delivery' }}
+        </button>
+      </div>
+    </form>
+
+    <section class="deliveries-section" aria-labelledby="deliveries-title">
+      <div class="list-heading">
+        <div>
+          <p class="eyebrow">DISPATCH LOG</p>
+          <h2 id="deliveries-title">Recent deliveries</h2>
+        </div>
+        <div class="list-actions">
+          <span class="list-count">{{ deliveries.length }} records</span>
+          @if (deliveries.length > 0) {
+          <button class="download-button" type="button" (click)="downloadDeliveries()">Download XLSX</button>
+          <button class="clear-button" type="button" (click)="clearDeliveries()">Clear deliveries</button>
+          }
+        </div>
+      </div>
+
+      @if (deliveriesError) {
+      <p class="error-message" role="alert">{{ deliveriesError }}</p>
+      } @if (loadingDeliveries) {
+      <div class="empty-state" role="status">
+        <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+        <p>Loading deliveries…</p>
+      </div>
+      } @else if (deliveries.length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon" aria-hidden="true">↗</div>
+        <h3>No deliveries recorded yet</h3>
+        <p>Your new delivery entries will appear here.</p>
+      </div>
+      } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">DR No.</th>
+              <th scope="col">Truck Plate No.</th>
+              <th scope="col">Customer's Name</th>
+              <th scope="col">Destination</th>
+              <th scope="col" class="amount-column">Hauling Rate</th>
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of deliveries; track item.id) {
+            <tr>
+              <td>{{ item.date }}</td>
+              <td>{{ item.drNumber }}</td>
+              <td>{{ item.truckPlate }}</td>
+              <td>{{ item.customerName }} ({{ item.postLength }} ft)</td>
+              <td>{{ item.destination }}</td>
+              <td class="amount-column">{{ item.price === null ? '—' : (item.price | number: '1.2-2') }}</td>
+              <td>
+                <button
+                  class="remove-button"
+                  type="button"
+                  [attr.aria-label]="'Remove delivery ' + item.drNumber"
+                  (click)="removeDelivery(item.id)"
+                >
+                  Remove
+                </button>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+    </section>
+  </main>
 </ion-content>

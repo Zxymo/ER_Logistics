@@ -5,7 +5,9 @@
   "homepage": "https://ionicframework.com/",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --proxy-config proxy.conf.json",
+    "api": "node server/index.js",
+    "test:api": "node --test server/app.test.js",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "lint": "npm run eslint && npm run typecheck:e2e && npm run prettier -- --check",
@@ -32,7 +34,12 @@
     "@capacitor/keyboard": "8.0.6",
     "@capacitor/status-bar": "8.0.4",
     "@ionic/angular": "^9.0.0",
+    "compression": "^1.8.2",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "fflate": "^0.8.3",
     "ionicons": "^8.1.0",
+    "mysql2": "^3.24.6",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
